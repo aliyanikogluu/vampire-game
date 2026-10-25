@@ -9,9 +9,9 @@ const io = new Server(server, {
   cors: { origin: "*" }
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Dosyalar kök dizinde olduğu için böyle ayarladık
+app.use(express.static(__dirname));
 
-// Oda yönetimi
 const rooms = new Map();
 
 function generateRoomCode() {
@@ -40,8 +40,8 @@ function createRoom(hostSocketId, hostName, settings) {
     },
     players: new Map(),
     phase: 'lobby',
-    nightVotes: {},      // vampireId -> targetId
-    dayVotes: {},       // playerId -> targetId
+    nightVotes: {},
+    dayVotes: {},
     killedTonight: null,
     eliminatedToday: null,
     winner: null,
@@ -70,7 +70,6 @@ function assignRoles(room) {
   const playerList = Array.from(room.players.values());
   const numVampires = Math.min(room.settings.numVampires, Math.floor(playerList.length / 2));
   
-  // Karıştır
   for (let i = playerList.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [playerList[i], playerList[j]] = [playerList[j], playerList[i]];
@@ -106,7 +105,6 @@ function broadcastRoom(room) {
     name: p.name,
     isAlive: p.isAlive,
     isHost: p.id === room.hostId,
-    // Rol sadece oyun sonunda gösterilir
     role: room.phase === 'game_over' ? p.role : undefined
   }));
 
@@ -172,14 +170,12 @@ function startNight(room) {
     if (s) sendPrivateState(s, room);
   });
 
-  // Demo botları varsa gece aksiyonu başlat
   if (Array.from(room.players.values()).some(p => p.isBot)) {
     setTimeout(() => botNightAction(room), 1500);
   }
 }
 
 function resolveNight(room) {
-  // En çok oy alan kişi ölür (eşitlikte rastgele)
   const voteCounts = {};
   Object.values(room.nightVotes).forEach(targetId => {
     voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
@@ -204,7 +200,7 @@ function resolveNight(room) {
       room.killedTonight = { id: killed.id, name: killed.name };
     }
   } else {
-    room.killedTonight = null; // Kimse ölmedi
+    room.killedTonight = null;
   }
 
   if (checkWinCondition(room)) {
@@ -256,7 +252,6 @@ function startDayVote(room) {
     resolveDayVote(room);
   }, room.settings.voteTime * 1000);
 
-  // Demo botları oy versin
   if (Array.from(room.players.values()).some(p => p.isBot)) {
     scheduleBotDayVotes(room);
   }
@@ -280,7 +275,6 @@ function resolveDayVote(room) {
     }
   }
 
-  // En az 1 oy ve tek aday varsa elenir (eşitlikte kimse elenmez basitlik için)
   if (candidates.length === 1 && maxVotes > 0) {
     const eliminatedId = candidates[0];
     const eliminated = room.players.get(eliminatedId);
@@ -301,11 +295,81 @@ function resolveDayVote(room) {
     return;
   }
 
-  // Yeni gece
   startNight(room);
 }
 
-// Socket bağlantıları
+function findRoomBySocket(socketId) {
+  for (const room of rooms.values()) {
+    if (room.players.has(socketId)) return room;
+  }
+  return null;
+}
+
+function botNightAction(room) {
+  if (room.phase !== 'night') return;
+
+  const aliveVamps = getAliveVampires(room).filter(p => p.isBot);
+  const possibleTargets = getAliveVillagers(room);
+
+  if (possibleTargets.length === 0) return;
+
+  aliveVamps.forEach(vamp => {
+    if (!room.nightVotes[vamp.id]) {
+      const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+      room.nightVotes[vamp.id] = target.id;
+    }
+  });
+
+  const realVamps = getAliveVampires(room).filter(p => !p.isBot);
+  if (realVamps.length === 0 || realVamps.every(v => room.nightVotes[v.id])) {
+    setTimeout(() => resolveNight(room), 1000);
+  } else {
+    setTimeout(() => {
+      if (room.phase === 'night') {
+        const stillNeeded = getAliveVampires(room).filter(v => !room.nightVotes[v.id]);
+        stillNeeded.forEach(v => {
+          if (v.isBot) {
+            const t = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+            room.nightVotes[v.id] = t.id;
+          }
+        });
+        resolveNight(room);
+      }
+    }, 12000);
+  }
+}
+
+function scheduleBotDayVotes(room) {
+  if (room.phase !== 'day_vote') return;
+
+  const bots = getAlivePlayers(room).filter(p => p.isBot);
+  bots.forEach((bot, idx) => {
+    setTimeout(() => {
+      if (room.phase !== 'day_vote' || !room.players.has(bot.id)) return;
+      const alive = getAlivePlayers(room).filter(p => p.id !== bot.id);
+      if (alive.length === 0) return;
+
+      if (Math.random() < 0.7) {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        room.dayVotes[bot.id] = target.id;
+      } else {
+        room.dayVotes[bot.id] = 'skip';
+      }
+
+      broadcastRoom(room);
+      const hostSocket = io.sockets.sockets.get(room.hostId);
+      if (hostSocket) sendPrivateState(hostSocket, room);
+
+      const allAlive = getAlivePlayers(room);
+      const voted = allAlive.filter(p => room.dayVotes[p.id]).length;
+      if (voted >= allAlive.length) {
+        clearTimers(room);
+        resolveDayVote(room);
+      }
+    }, 1500 + idx * 800 + Math.random() * 1000);
+  });
+}
+
 io.on('connection', (socket) => {
   console.log('Bağlandı:', socket.id);
 
@@ -322,7 +386,6 @@ io.on('connection', (socket) => {
       voteTime: Math.min(90, Math.max(15, parseInt(voteTime) || 30))
     };
 
-    // Vampir sayısı kontrolü
     if (settings.numVampires >= settings.maxPlayers) {
       settings.numVampires = Math.max(1, Math.floor(settings.maxPlayers / 3));
     }
@@ -363,7 +426,6 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Aynı isim kontrolü
     const nameExists = Array.from(room.players.values()).some(
       p => p.name.toLowerCase() === name.trim().toLowerCase()
     );
@@ -408,7 +470,6 @@ io.on('connection', (socket) => {
       if (s) sendPrivateState(s, room);
     });
 
-    // 5 saniye rol göster, sonra gece başlasın
     setTimeout(() => {
       if (rooms.has(room.code) && room.phase === 'role_reveal') {
         startNight(room);
@@ -424,12 +485,11 @@ io.on('connection', (socket) => {
     if (!player || !player.isAlive || player.role !== 'vampir') return;
 
     const target = room.players.get(targetId);
-    if (!target || !target.isAlive || target.role === 'vampir') return; // Vampirler birbirini öldüremez
+    if (!target || !target.isAlive || target.role === 'vampir') return;
 
     room.nightVotes[socket.id] = targetId;
     player.hasVoted = true;
 
-    // Tüm canlı vampirler oy verdiyse hemen çöz
     const aliveVamps = getAliveVampires(room);
     const votedCount = aliveVamps.filter(v => room.nightVotes[v.id]).length;
 
@@ -451,7 +511,6 @@ io.on('connection', (socket) => {
     const player = room.players.get(socket.id);
     if (!player || !player.isAlive) return;
 
-    // skip veya canlı oyuncu
     if (targetId !== 'skip') {
       const target = room.players.get(targetId);
       if (!target || !target.isAlive) return;
@@ -466,7 +525,6 @@ io.on('connection', (socket) => {
       if (s) sendPrivateState(s, room);
     });
 
-    // Herkes oy verdiyse erken bitir
     const alive = getAlivePlayers(room);
     const votedCount = alive.filter(p => room.dayVotes[p.id]).length;
     if (votedCount >= alive.length) {
@@ -484,7 +542,6 @@ io.on('connection', (socket) => {
     startDayVote(room);
   });
 
-  // Demo modu: Botlarla dolu oda oluştur
   socket.on('createDemo', ({ name }) => {
     const settings = {
       maxPlayers: 6,
@@ -495,7 +552,6 @@ io.on('connection', (socket) => {
 
     const room = createRoom(socket.id, name || 'DemoHost', settings);
 
-    // Gerçek oyuncu
     room.players.set(socket.id, {
       id: socket.id,
       name: (name || 'Sen').substring(0, 16),
@@ -504,7 +560,6 @@ io.on('connection', (socket) => {
       hasVoted: false
     });
 
-    // 5 bot ekle
     const botNames = ['Ayse', 'Mehmet', 'Zeynep', 'Can', 'Elif'];
     botNames.forEach((botName, i) => {
       const botId = 'bot_' + i + '_' + Date.now();
@@ -523,7 +578,6 @@ io.on('connection', (socket) => {
     broadcastRoom(room);
     sendPrivateState(socket, room);
 
-    // Demo için otomatik başlat (2 sn sonra)
     setTimeout(() => {
       if (!rooms.has(room.code)) return;
       assignRoles(room);
@@ -534,8 +588,6 @@ io.on('connection', (socket) => {
       setTimeout(() => {
         if (rooms.has(room.code) && room.phase === 'role_reveal') {
           startNight(room);
-          // Bot vampirleri otomatik oy versin
-          setTimeout(() => botNightAction(room), 2000);
         }
       }, 4000);
     }, 1500);
@@ -553,103 +605,14 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Host gittiyse yeni host ata
     if (room.hostId === socket.id) {
       const newHost = room.players.keys().next().value;
       room.hostId = newHost;
     }
 
-    // Oyun sırasında biri çıkarsa ve yetersiz kalırsa
-    if (room.phase !== 'lobby' && room.phase !== 'game_over') {
-      if (getAlivePlayers(room).length < 3 || checkWinCondition(room)) {
-        // devam et veya bitir
-      }
-    }
-
     broadcastRoom(room);
   });
 });
-
-function findRoomBySocket(socketId) {
-  for (const room of rooms.values()) {
-    if (room.players.has(socketId)) return room;
-  }
-  return null;
-}
-
-// Bot davranışları (Demo için)
-function botNightAction(room) {
-  if (room.phase !== 'night') return;
-
-  const aliveVamps = getAliveVampires(room).filter(p => p.isBot);
-  const possibleTargets = getAliveVillagers(room);
-
-  if (possibleTargets.length === 0) return;
-
-  aliveVamps.forEach(vamp => {
-    if (!room.nightVotes[vamp.id]) {
-      const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
-      room.nightVotes[vamp.id] = target.id;
-    }
-  });
-
-  // Gerçek oyuncu da vampirse bekle, değilse çöz
-  const realVamps = getAliveVampires(room).filter(p => !p.isBot);
-  if (realVamps.length === 0 || realVamps.every(v => room.nightVotes[v.id])) {
-    setTimeout(() => resolveNight(room), 1000);
-  } else {
-    // Gerçek oyuncu oy verene kadar bekle, ama timeout koy
-    setTimeout(() => {
-      if (room.phase === 'night') {
-        // Kalan botlar zaten oy verdi, gerçek oyuncu vermediyse rastgele bir şey yapma, sadece çöz
-        const stillNeeded = getAliveVampires(room).filter(v => !room.nightVotes[v.id]);
-        stillNeeded.forEach(v => {
-          if (v.isBot) {
-            const t = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
-            room.nightVotes[v.id] = t.id;
-          }
-        });
-        // Eğer gerçek oyuncu hâlâ vermediyse bile çöz (demo rahatlığı)
-        resolveNight(room);
-      }
-    }, 12000);
-  }
-}
-
-// Day vote botları
-function scheduleBotDayVotes(room) {
-  if (room.phase !== 'day_vote') return;
-
-  const bots = getAlivePlayers(room).filter(p => p.isBot);
-  bots.forEach((bot, idx) => {
-    setTimeout(() => {
-      if (room.phase !== 'day_vote' || !room.players.has(bot.id)) return;
-      const alive = getAlivePlayers(room).filter(p => p.id !== bot.id);
-      if (alive.length === 0) return;
-
-      // %70 oy ver, %30 skip
-      if (Math.random() < 0.7) {
-        const target = alive[Math.floor(Math.random() * alive.length)];
-        room.dayVotes[bot.id] = target.id;
-      } else {
-        room.dayVotes[bot.id] = 'skip';
-      }
-
-      broadcastRoom(room);
-      // Host'a private güncelle (sadece gerçek oyuncu var)
-      const hostSocket = io.sockets.sockets.get(room.hostId);
-      if (hostSocket) sendPrivateState(hostSocket, room);
-
-      // Herkes oy verdi mi kontrol
-      const allAlive = getAlivePlayers(room);
-      const voted = allAlive.filter(p => room.dayVotes[p.id]).length;
-      if (voted >= allAlive.length) {
-        clearTimers(room);
-        resolveDayVote(room);
-      }
-    }, 1500 + idx * 800 + Math.random() * 1000);
-  });
-}
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
