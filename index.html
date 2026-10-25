@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Vampir & Köylü</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- ANA MENÜ -->
+    <section id="screen-home" class="screen active">
+      <div class="logo">
+        <div class="logo-icon">🧛</div>
+        <h1>Vampir & Köylü</h1>
+        <p class="subtitle">Basit • Hızlı • Mobil</p>
+      </div>
+
+      <div class="menu-buttons">
+        <button class="btn btn-primary" id="btn-create">Oda Kur</button>
+        <button class="btn btn-secondary" id="btn-join">Odaya Katıl</button>
+        <button class="btn btn-demo" id="btn-demo">🎮 Demo Modu (Botlarla Test)</button>
+      </div>
+
+      <p class="footer-note">3-16 kişi • Link ile katıl • Dark mode</p>
+    </section>
+
+    <!-- ODA KUR -->
+    <section id="screen-create" class="screen">
+      <button class="back-btn" data-back="home">← Geri</button>
+      <h2>Oda Kur</h2>
+
+      <div class="form-group">
+        <label>Senin İsmin</label>
+        <input type="text" id="create-name" maxlength="16" placeholder="İsim gir..." autocomplete="off">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Maks. Oyuncu</label>
+          <select id="create-max">
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8" selected>8</option>
+            <option value="10">10</option>
+            <option value="12">12</option>
+            <option value="14">14</option>
+            <option value="16">16</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vampir Sayısı</label>
+          <select id="create-vamps">
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tartışma (sn)</label>
+          <select id="create-disc">
+            <option value="30">30</option>
+            <option value="45">45</option>
+            <option value="60" selected>60</option>
+            <option value="90">90</option>
+            <option value="120">120</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Oylama (sn)</label>
+          <select id="create-vote">
+            <option value="20">20</option>
+            <option value="30" selected>30</option>
+            <option value="45">45</option>
+            <option value="60">60</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="btn-create-confirm">Odayı Oluştur</button>
+    </section>
+
+    <!-- ODAYA KATIL -->
+    <section id="screen-join" class="screen">
+      <button class="back-btn" data-back="home">← Geri</button>
+      <h2>Odaya Katıl</h2>
+
+      <div class="form-group">
+        <label>Senin İsmin</label>
+        <input type="text" id="join-name" maxlength="16" placeholder="İsim gir..." autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label>Oda Kodu</label>
+        <input type="text" id="join-code" maxlength="5" placeholder="Örn: A3K9P" autocomplete="off" style="text-transform:uppercase; letter-spacing:4px; font-size:1.4rem; text-align:center;">
+      </div>
+
+      <button class="btn btn-primary btn-block" id="btn-join-confirm">Katıl</button>
+    </section>
+
+    <!-- LOBİ -->
+    <section id="screen-lobby" class="screen">
+      <div class="lobby-header">
+        <div>
+          <span class="label">Oda Kodu</span>
+          <div class="room-code" id="lobby-code">-----</div>
+        </div>
+        <button class="btn btn-small" id="btn-copy-link">Linki Kopyala</button>
+      </div>
+
+      <div class="players-box">
+        <div class="players-title">Oyuncular <span id="player-count">0/8</span></div>
+        <ul id="player-list"></ul>
+      </div>
+
+      <div class="lobby-info" id="lobby-settings"></div>
+
+      <div class="lobby-actions">
+        <button class="btn btn-primary btn-block" id="btn-start" style="display:none;">Oyunu Başlat</button>
+        <p class="waiting-text" id="waiting-text">Oda sahibi oyunu başlatacak...</p>
+      </div>
+    </section>
+
+    <!-- ROL AÇIKLAMA -->
+    <section id="screen-role" class="screen">
+      <div class="role-card" id="role-card">
+        <div class="role-emoji" id="role-emoji">❓</div>
+        <div class="role-name" id="role-name">...</div>
+        <div class="role-desc" id="role-desc"></div>
+        <div class="fellows" id="role-fellows"></div>
+      </div>
+      <p class="hint">Oyun birazdan başlayacak...</p>
+    </section>
+
+    <!-- OYUN EKRANI -->
+    <section id="screen-game" class="screen">
+      <div class="game-header">
+        <div class="phase-badge" id="phase-badge">GECE</div>
+        <div class="timer" id="game-timer"></div>
+      </div>
+
+      <div class="announcement" id="announcement"></div>
+
+      <div class="players-grid" id="players-grid"></div>
+
+      <div class="action-panel" id="action-panel"></div>
+
+      <div class="my-status">
+        <span id="my-role-badge"></span>
+        <span id="alive-status"></span>
+      </div>
+    </section>
+
+    <!-- OYUN SONU -->
+    <section id="screen-end" class="screen">
+      <div class="end-card">
+        <div class="end-emoji" id="end-emoji">🏆</div>
+        <h2 id="end-title">Oyun Bitti</h2>
+        <p id="end-desc"></p>
+        <div class="final-roles" id="final-roles"></div>
+        <button class="btn btn-primary btn-block" id="btn-home">Ana Menüye Dön</button>
+      </div>
+    </section>
+
+    <!-- HATA TOAST -->
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>

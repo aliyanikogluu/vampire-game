@@ -1,0 +1,593 @@
+:root {
+  --bg: #0f0f13;
+  --surface: #1a1a22;
+  --surface2: #24242e;
+  --border: #2e2e3a;
+  --text: #e8e8f0;
+  --text-dim: #9a9aab;
+  --primary: #7c5cff;
+  --primary-hover: #6a4de0;
+  --danger: #ff4d6a;
+  --success: #3dd68c;
+  --warning: #ffc14d;
+  --vampire: #c44dff;
+  --villager: #4da6ff;
+  --radius: 14px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  line-height: 1.45;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 16px;
+  position: relative;
+}
+
+.screen {
+  display: none;
+  animation: fadeIn 0.25s ease;
+}
+
+.screen.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* LOGO */
+.logo {
+  text-align: center;
+  padding: 48px 0 32px;
+}
+
+.logo-icon {
+  font-size: 64px;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 20px rgba(124, 92, 255, 0.4));
+}
+
+.logo h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-demo {
+  background: linear-gradient(135deg, #2a1f4e, #1f2a4e);
+  color: #c4b5ff;
+  border: 1px solid #4a3a8a;
+  margin-top: 8px;
+}
+
+.btn-small {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  width: auto;
+  margin: 0;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-buttons {
+  margin-top: 24px;
+}
+
+.footer-note {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin-top: 40px;
+}
+
+/* FORM */
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 16px;
+  font-family: inherit;
+}
+
+h2 {
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--primary);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* LOBBY */
+.lobby-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.lobby-header .label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.room-code {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--primary);
+}
+
+.players-box {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.players-title {
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+}
+
+#player-list {
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+#player-list li {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+#player-list li:last-child {
+  border-bottom: none;
+}
+
+.player-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.player-name {
+  font-weight: 500;
+  flex: 1;
+}
+
+.host-badge {
+  font-size: 0.7rem;
+  background: var(--primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.lobby-info {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+}
+
+.waiting-text {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+/* ROLE CARD */
+#screen-role {
+  display: none;
+  text-align: center;
+  padding-top: 40px;
+}
+
+#screen-role.active {
+  display: block;
+}
+
+.role-card {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 40px 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
+}
+
+.role-emoji {
+  font-size: 72px;
+  margin-bottom: 16px;
+}
+
+.role-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.role-name.vampir { color: var(--vampire); }
+.role-name.koylu { color: var(--villager); }
+
+.role-desc {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+}
+
+.fellows {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.fellows strong {
+  color: var(--vampire);
+}
+
+.hint {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+/* GAME */
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.phase-badge {
+  background: var(--surface2);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.phase-badge.night { background: #2a1a3e; color: #c44dff; }
+.phase-badge.day { background: #1a2a3e; color: #4da6ff; }
+.phase-badge.vote { background: #3e2a1a; color: #ffc14d; }
+
+.timer {
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--warning);
+}
+
+.announcement {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-left: 4px solid var(--primary);
+  font-size: 0.95rem;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.player-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.player-card:active {
+  transform: scale(0.97);
+}
+
+.player-card.dead {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.player-card.selected {
+  border-color: var(--primary);
+  background: rgba(124, 92, 255, 0.15);
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.player-card .p-emoji {
+  font-size: 1.6rem;
+  margin-bottom: 4px;
+}
+
+.player-card .p-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-card .vote-count {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: var(--danger);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-panel {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+  min-height: 80px;
+}
+
+.action-panel h3 {
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  color: var(--text-dim);
+}
+
+.vote-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.vote-actions .btn {
+  flex: 1;
+  min-width: 120px;
+  margin: 0;
+  padding: 12px;
+}
+
+.my-status {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  padding: 8px 0;
+}
+
+#my-role-badge {
+  font-weight: 600;
+}
+
+#my-role-badge.vampir { color: var(--vampire); }
+#my-role-badge.koylu { color: var(--villager); }
+
+/* END */
+.end-card {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.end-emoji {
+  font-size: 72px;
+  margin-bottom: 16px;
+}
+
+.end-card h2 {
+  margin-bottom: 8px;
+}
+
+#end-desc {
+  color: var(--text-dim);
+  margin-bottom: 24px;
+}
+
+.final-roles {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 24px;
+  text-align: left;
+  border: 1px solid var(--border);
+}
+
+.final-roles .role-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.final-roles .role-row:last-child {
+  border-bottom: none;
+}
+
+.role-tag {
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.role-tag.vampir {
+  background: rgba(196, 77, 255, 0.2);
+  color: var(--vampire);
+}
+
+.role-tag.koylu {
+  background: rgba(77, 166, 255, 0.2);
+  color: var(--villager);
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--danger);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 100;
+  max-width: 90%;
+  text-align: center;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* SKIP BUTTON */
+.btn-skip {
+  background: var(--surface2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  margin-top: 8px;
+}
